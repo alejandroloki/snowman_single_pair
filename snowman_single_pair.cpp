@@ -514,6 +514,11 @@ double rpotentialwall2(double r2)
 // Wall repulsive force for colloid 1
 double rforcewall1(double r2)
 {
+    // 防止 r2 过小导致的除零或溢出
+    if (r2 < 1e-12) {
+        r2 = 1e-12;
+    }
+
     double repforcewall1, ir2, ir4, ir8, ir12, ir24, ir48, ir96;
     ir2 = square_rwall1 / r2;
     ir4 = ir2 * ir2;
@@ -529,6 +534,11 @@ double rforcewall1(double r2)
 // Wall repulsive force for colloid 2
 double rforcewall2(double r2)
 {
+    // 防止 r2 过小导致的除零或溢出
+    if (r2 < 1e-12) {
+        r2 = 1e-12;
+    }
+
     double repforcewall2, ir2, ir4, ir8, ir12, ir24, ir48, ir96;
     ir2 = square_rwall2 / r2;
     ir4 = ir2 * ir2;
@@ -1403,6 +1413,21 @@ int main()
             else if (rcx[k] > xlen) rcx[k] = rcx[k] - xlen;
             if (rcy[k] <= 0) rcy[k] = ylen + rcy[k];
             else if (rcy[k] > ylen) rcy[k] = rcy[k] - ylen;
+
+            // z 方向使用反射边界，防止雪人球心逃离计算区域
+            double lower_z = rcwall[k];
+            double upper_z = zlen - rcwall[k];
+
+            if (rcz[k] < lower_z)
+            {
+                rcz[k] = lower_z;
+                vcz[k] = fabs(vcz[k]);
+            }
+            else if (rcz[k] > upper_z)
+            {
+                rcz[k] = upper_z;
+                vcz[k] = -fabs(vcz[k]);
+            }
         }
 
         // === Check validity of colloid positions after update ===
